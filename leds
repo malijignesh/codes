@@ -1,0 +1,159 @@
+#include "FastLED.h"
+#include <Wire.h>
+
+// How many leds in your strip?
+#define NUM_LEDS 16
+#define c1 (-42.379)
+#define c2 (2.04901523)
+#define c3 (10.14333127)
+#define c4 (-0.22475541)
+#define c5 (-0.00683783)
+#define c6 (-0.05481717)
+#define c7 (0.00122874)
+#define c8 (0.00085282)
+#define c9 (-0.00000199)
+
+// For led chips like Neopixels, which have a data line, ground, and power, you just
+// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
+// ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
+
+// Define the array of leds
+//CRGB leds[NUM_LEDS];
+CRGBArray<NUM_LEDS> leds;
+char c;
+String h = "0";
+String t = "0";
+
+void setup() { 
+
+  	  FastLED.addLeds<NEOPIXEL, 5>(leds, NUM_LEDS);
+      Wire.begin(8);                // join i2c bus with address #8
+      Wire.onReceive(receiveEvent); // register event'
+      Serial.begin(9600);
+}
+
+void loop() { 
+
+if (c == 'r')
+  {
+    ledonoff();
+    //Serial.print("r");
+    //ledflash();
+    c = 'k';
+  }
+else {
+    indicatee(h.toInt(),t.toInt());
+  }
+ 
+}
+
+
+void receiveEvent(int howMany) {
+  while (Wire.available()) { // loop through all but the last
+    c = Wire.read(); // receive byte as a character
+    Serial.print(c);   // print the character
+    if (c == 'd')
+    {
+      h="";
+      t="";
+      while (Wire.available())
+      {
+        char ct = Wire.read();
+      if (ct != ':' )
+      {
+        h += ct;
+      }
+      else
+        break;
+
+      }
+    while (Wire.available())
+      {
+        t += char(Wire.read());
+      }
+      
+    }
+ 
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+void ledonoff()//task8
+{
+    static uint8_t hue;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    //leds.fadeToBlackBy(40);
+    leds[i] = CHSV(hue++,200,200);
+    FastLED.delay(33);
+    FastLED.show();
+  }
+  
+   // static uint8_t hue;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    //leds.fadeToBlackBy(40);
+    leds[i] = CHSV(hue++,200,200);
+    FastLED.delay(33);
+    FastLED.show();
+  }
+  
+
+  FastLED.delay(30);
+  for (int i = NUM_LEDS; i >= 0; i--) {
+    //leds.fadeToBlackBy(40);
+    leds[i] = CRGB(0, 0, 0); //leds.fadeToBlackBy(4);;//CHSV(hue++,255,255);
+    // FastLED.delay(33);
+    FastLED.show();
+  }
+  
+}
+
+
+
+
+void indicatee(int humi, int tmp)//task8
+{
+//  hu = map(hu, 0, 100, 0, 7);
+//  tmp = map(tmp, 10, 60, 0, 7);
+    float tempf=((tmp*9.0)/5.0)+32.0;
+    float HI = c1+c2*(tempf)+c3*(humi)+c4*(tempf)*(humi)+c5*(pow(tempf,2))+c6*(pow(humi,2))+c7*(pow(tempf, 2))*(humi)+c8*(tempf)*(pow(humi, 2))+c9*(pow(tempf, 2))*(pow(humi, 2));  // the heatindex formula
+    float HIc = ((((HI)-32)*5)/9);  //  converting to C
+    Serial.println(HIc);
+    int lg=map(HIc, 0 , 50, 0, 15);
+    
+  leds.fadeToBlackBy(40);
+  for (int i = 0; i <=15; i++) {
+    //s.fadeToBlackBy(40);
+    if(i<=lg){
+    if(lg<6)  
+    leds[i] =CRGB(0,0,20);
+    else if(lg<11)
+    leds[i]=CRGB(25,25,0);
+    else
+    leds[i]=CRGB(25,0,0);//CRGB((lg*17),gc, ((15-lg)*12));// change the hue value accordingly ///CRGB(255, 225, 0); //CHSV(hue++,255,255);
+    FastLED.delay(33);
+    FastLED.show();}
+    else{
+    leds[i] = CRGB(0, 0, 0);
+    FastLED.delay(33);
+    FastLED.show();}
+  }
+  
+  for (int i = 8; i <= 15; i++) {
+    //leds.fadeToBlackBy(40);
+   
+  }
+  FastLED.show();
+
+ 
+}
